@@ -49,18 +49,21 @@ func Stats() zapStats {
 }
 
 func (s *SegmentBase) readMem(x, y uint64) []byte {
-	if s.mem == nil {
+	if s.mmapOwner != nil {
 		return s.mmapOwner.readMM(int64(x), int64(y))
 	}
 	return s.mem[x:y]
 }
 
 func (s *Segment) readMM(x, y int64) []byte {
-	if s.mm == nil {
-		data, _ := ioutil.ReadAll(io.NewSectionReader(s.f, x, y-x))
-		return data
+	s.loadMmap()
+
+	if s.mm != nil {
+		return s.mm[x:y]
 	}
-	return s.mm[x:y]
+
+	data, _ := ioutil.ReadAll(io.NewSectionReader(s.f, x, y-x))
+	return data
 }
 
 func (s *Segment) loadMmap() error {
@@ -68,6 +71,13 @@ func (s *Segment) loadMmap() error {
 		atomic.LoadInt64(&mmapCurrentBytes)+int64(s.mmSize) > MmapMaxBytes {
 		return nil
 	}
+
+	if s.mm != nil {
+		return nil
+	}
+
+	s.mmLock.Lock()
+	defer s.mmLock.Unlock()
 
 	if s.mm != nil {
 		return nil
@@ -83,14 +93,17 @@ func (s *Segment) loadMmap() error {
 	}
 
 	s.mm = mm
-	s.SegmentBase.mem = mm[0 : s.mmSize-FooterSize]
 	return nil
 }
 
 func (s *Segment) unloadMmap() error {
+	s.mmLock.Lock()
+	defer s.mmLock.Unlock()
+
 	if s.mm == nil {
 		return nil
 	}
+
 	err := s.mm.Unmap()
 	if err == nil {
 		atomic.AddInt64(&mmapCurrentBytes, -int64(s.mmSize))

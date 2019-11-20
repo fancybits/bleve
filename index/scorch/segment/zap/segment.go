@@ -158,6 +158,7 @@ type Segment struct {
 	f       *os.File
 	mm      mmap.MMap
 	mmSize  int64
+	mmLock  sync.Mutex
 	path    string
 	version uint32
 	crc     uint32
