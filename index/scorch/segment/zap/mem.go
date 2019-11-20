@@ -49,7 +49,7 @@ func Stats() zapStats {
 }
 
 func (s *SegmentBase) readMem(start, end uint64) []byte {
-	if s.mem == nil {
+	if s.mmapOwner != nil {
 		return s.mmapOwner.readMM(start, end)
 	}
 	return s.mem[start:end]
@@ -83,7 +83,6 @@ func (s *Segment) loadMmap() error {
 	}
 
 	s.mm = mm
-	s.SegmentBase.mem = mm[0 : s.mmSize-FooterSize]
 	return nil
 }
 
