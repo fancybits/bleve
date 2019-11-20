@@ -230,6 +230,7 @@ func (s *Scorch) introduceSegment(next *segmentIntroduction) error {
 	if rootPrev != nil {
 		_ = rootPrev.DecRef()
 	}
+	newSnapshot.mmapHint()
 
 	close(next.applied)
 
@@ -308,6 +309,7 @@ func (s *Scorch) introducePersist(persist *persistIntroduction) {
 	if rootPrev != nil {
 		_ = rootPrev.DecRef()
 	}
+	newIndexSnapshot.mmapHint()
 
 	close(persist.applied)
 }
@@ -437,6 +439,7 @@ func (s *Scorch) introduceMerge(nextMerge *segmentMerge) {
 	if rootPrev != nil {
 		_ = rootPrev.DecRef()
 	}
+	newSnapshot.mmapHint()
 
 	// notify requester that we incorporated this
 	nextMerge.notify <- newSnapshot
@@ -512,6 +515,7 @@ func (s *Scorch) revertToSnapshot(revertTo *snapshotReversion) error {
 	if rootPrev != nil {
 		_ = rootPrev.DecRef()
 	}
+	newSnapshot.mmapHint()
 
 	close(revertTo.applied)
 

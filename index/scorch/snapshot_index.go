@@ -27,6 +27,7 @@ import (
 	"github.com/blevesearch/bleve/document"
 	"github.com/blevesearch/bleve/index"
 	"github.com/blevesearch/bleve/index/scorch/segment"
+	"github.com/blevesearch/bleve/index/scorch/segment/zap"
 	"github.com/couchbase/vellum"
 	lev "github.com/couchbase/vellum/levenshtein"
 )
@@ -124,6 +125,14 @@ func (i *IndexSnapshot) updateSize() {
 	i.size += uint64(reflectStaticSizeIndexSnapshot)
 	for _, s := range i.segment {
 		i.size += uint64(s.Size())
+	}
+}
+
+func (i *IndexSnapshot) mmapHint() {
+	for _, s := range i.segment {
+		if s, ok := s.segment.(*zap.Segment); ok {
+			s.MmapHint()
+		}
 	}
 }
 

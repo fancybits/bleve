@@ -97,3 +97,11 @@ func (s *Segment) unloadMmap() error {
 	}
 	return err
 }
+
+// MmapHint requests that the segment be mapped into memory for faster access.
+//
+// This usually happens automatically, but may be necessary on 32-bit systems or when
+// using MmapMaxBytes.
+func (s *Segment) MmapHint() {
+	s.loadMmap()
+}
