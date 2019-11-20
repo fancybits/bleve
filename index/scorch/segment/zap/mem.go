@@ -56,11 +56,16 @@ func (s *SegmentBase) readMem(start, end uint64) []byte {
 }
 
 func (s *Segment) readMM(start, end uint64) []byte {
-	if s.mm == nil {
-		data, _ := ioutil.ReadAll(io.NewSectionReader(s.f, int64(start), int64(end-start)))
-		return data
+	s.mmLock.RLock()
+	mm := s.mm
+	s.mmLock.RUnlock()
+
+	if mm != nil {
+		return mm[start:end]
 	}
-	return s.mm[start:end]
+
+	data, _ := ioutil.ReadAll(io.NewSectionReader(s.f, int64(start), int64(end-start)))
+	return data
 }
 
 func (s *Segment) loadMmap() error {
@@ -68,6 +73,13 @@ func (s *Segment) loadMmap() error {
 		atomic.LoadInt64(&mmapCurrentBytes)+int64(s.mmSize) > MmapMaxBytes {
 		return nil
 	}
+
+	if s.mm != nil {
+		return nil
+	}
+
+	s.mmLock.Lock()
+	defer s.mmLock.Unlock()
 
 	if s.mm != nil {
 		return nil
@@ -87,9 +99,13 @@ func (s *Segment) loadMmap() error {
 }
 
 func (s *Segment) unloadMmap() error {
+	s.mmLock.Lock()
+	defer s.mmLock.Unlock()
+
 	if s.mm == nil {
 		return nil
 	}
+
 	err := s.mm.Unmap()
 	if err == nil {
 		atomic.AddInt64(&mmapCurrentBytes, -int64(s.mmSize))
