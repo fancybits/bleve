@@ -198,6 +198,9 @@ func (s *Scorch) openBolt() error {
 			}
 		}
 	}
+	if timeout, ok := s.config["bolt_timeout"].(time.Duration); ok {
+		rootBoltOpt.Timeout = timeout
+	}
 
 	rootBoltPath := s.path + string(os.PathSeparator) + "root.bolt"
 	var err error
