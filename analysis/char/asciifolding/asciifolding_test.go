@@ -15,6 +15,7 @@
 package asciifolding
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -47,14 +48,20 @@ func TestAsciiFoldingFilter(t *testing.T) {
 			// apples from https://issues.couchbase.com/browse/MB-33486
 			input:  []byte(`Ápple Àpple Äpple Âpple Ãpple Åpple`),
 			output: []byte(`Apple Apple Apple Apple Apple Apple`),
+		}, {
+			// Fix ASCII folding of \u24A2
+			input:  []byte(`⒢`),
+			output: []byte(`(g)`),
 		},
 	}
 
 	for _, test := range tests {
 		filter := New()
-		output := filter.Filter(test.input)
-		if !reflect.DeepEqual(output, test.output) {
-			t.Errorf("Expected:\n`%s`\ngot:\n`%s`\nfor:\n`%s`\n", string(test.output), string(output), string(test.input))
-		}
+		t.Run(fmt.Sprintf("on %s", test.input), func(t *testing.T) {
+			output := filter.Filter(test.input)
+			if !reflect.DeepEqual(output, test.output) {
+				t.Errorf("\nExpected:\n`%s`\ngot:\n`%s`\n", string(test.output), string(output))
+			}
+		})
 	}
 }
