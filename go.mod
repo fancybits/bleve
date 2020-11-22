@@ -25,3 +25,5 @@ require (
 	go.etcd.io/bbolt v1.3.5
 	golang.org/x/text v0.3.0
 )
+
+replace github.com/blevesearch/zap/v15 => github.com/fancybits/zap/v15 v15.0.3-0.20201122233156-a4f3b49cdf46
